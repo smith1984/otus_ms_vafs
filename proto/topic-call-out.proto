@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package vafs.kafka.topic.call.out;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "ru.beeline.vafs.proto.topic.call.out";
+
+message ProcessResult {
+  string sessionId = 1;
+  google.protobuf.Timestamp ts = 2;
+  Result result = 3;
+  optional int32 resultCode = 4;
+}
+
+enum Result {
+  CONTINUE = 0;
+  RELEASE = 1;
+}

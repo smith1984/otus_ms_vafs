@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package vafs.kafka.topic.rule;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "ru.beeline.vafs.proto.topic.rule";
+
+message ChangedRule {
+  string id = 1;
+  google.protobuf.Timestamp ts = 2;
+  Action action = 3;
+  string user = 4;
+  RuleEntity rule = 5;
+}
+
+message RuleEntity {
+  string ruleId = 1;
+  oneof data {
+    DataV1 v1 = 101;
+  }
+
+  message DataV1 {
+    string id = 1;
+    string description = 2;
+    int32 priority = 3;
+    repeated string listForNumberA = 4;
+    TypeOperationList typeOperationA = 5;
+    repeated string listForNumberB = 6;
+    TypeOperationList typeOperationB = 7;
+    TypeOperationCount typeOperationCount = 8;
+    int32 targetCount = 9;
+    bool valueIsTrue = 10;
+    TypeOperationBool typeOperationAB = 11;
+    TypeOperationBool typeOperationABCount = 12;
+    string lock = 13;
+  }
+
+}
+
+enum Action {
+  REMOVED = 0;
+  CHANGE = 1;
+  ADD = 2;
+  DEACTIVATE = 3;
+  IMPORT = 4;
+  ACTIVATE = 5;
+}
+
+enum TypeOperationList {
+  INCLUDE = 0;
+  EXCLUDE = 1;
+}
+
+enum TypeOperationCount {
+  MORE = 0;
+  LESS = 1;
+  EQUAL = 2;
+  MORE_EQUAL = 3;
+  LESS_EQUAL = 4;
+}
+
+enum TypeOperationBool {
+  OR = 0;
+  AND = 1;
+  NOT = 2;
+  XOR = 3;
+}

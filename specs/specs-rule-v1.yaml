@@ -1,0 +1,456 @@
+openapi: 3.0.4
+info:
+  title: "Voice antifraud system ${VERSION_APP}"
+  description: This is a place where operator works with rules
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/v1
+tags:
+  - name: rule
+    description: Правило обработки звонка
+paths:
+  /rule/create:
+    post:
+      tags:
+        - rule
+      summary: Create rule
+      operationId: ruleCreate
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreateRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleCreateResponse'
+  /rule/read:
+    post:
+      tags:
+        - rule
+      summary: Read rule
+      operationId: ruleRead
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleReadRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleReadResponse'
+  /rule/update:
+    post:
+      tags:
+        - rule
+      summary: Update rule
+      operationId: ruleUpdate
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdateRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleUpdateResponse'
+  /rule/delete:
+    post:
+      tags:
+        - rule
+      summary: Delete rule
+      operationId: ruleDelete
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleDeleteRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleDeleteResponse'
+  /rule/search:
+    post:
+      tags:
+        - rule
+      summary: Search rule
+      operationId: ruleSearch
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleSearchRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleSearchResponse'
+
+components:
+  schemas:
+
+    IRequest:
+      type: object
+      description: Базовый интерфейс для всех запросов
+      properties:
+        requestType:
+          type: string
+          description: Поле-дискриминатор для вычисления типа запроса
+          example: create
+        requestId:
+          type: string
+          description: Идентификатор запроса для отладки
+      discriminator:
+        propertyName: requestType
+        mapping:
+          create: '#/components/schemas/RuleCreateRequest'
+          read:   '#/components/schemas/RuleReadRequest'
+          update: '#/components/schemas/RuleUpdateRequest'
+          delete: '#/components/schemas/RuleDeleteRequest'
+          search: '#/components/schemas/RuleSearchRequest'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        group:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+
+    ResponseResult:
+      type: string
+      enum:
+        - success
+        - error
+
+    IResponse:
+      type: object
+      description: Базовый интерфейс для всех ответов
+      properties:
+        responseType:
+          type: string
+          description: Поле-дискриминатор для вычисления типа запроса
+          example: create
+        requestId:
+          type: string
+          description: Идентификатор запроса для отладки
+        result:
+          $ref: '#/components/schemas/ResponseResult'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+
+      discriminator:
+        propertyName: responseType
+        mapping:
+          create: '#/components/schemas/RuleCreateResponse'
+          read:   '#/components/schemas/RuleReadResponse'
+          update: '#/components/schemas/RuleUpdateResponse'
+          delete: '#/components/schemas/RuleDeleteResponse'
+          search: '#/components/schemas/RuleSearchResponse'
+          init: '#/components/schemas/RuleInitResponse'
+
+
+    UserId:
+      type: string
+      description: Идентификатор пользователя
+    RuleId:
+      type: string
+      description: Идентификатор правила
+    RuleLock:
+      type: string
+      description: Версия оптимистичной блокировки
+
+    BaseRule:
+      type: object
+      description: Объект описывает свойства, одинаковые для create и update
+      properties:
+        description:
+          type: string
+          description: Описание правила
+        priority:
+          type: integer
+          description: Приоритет выполнения правила
+        listForNumberA:
+          type: array
+          items:
+            type: string
+          description: Список для проверки номера вызывающего абонента
+        typeOperationA:
+          $ref: '#/components/schemas/typeOperation'
+        listForNumberB:
+          type: array
+          items:
+            type: string
+          description: Список для проверки номера вызываемого абонента
+        typeOperationB:
+          $ref: '#/components/schemas/typeOperation'
+        typeOperationCount:
+          $ref: '#/components/schemas/typeOperationCount'
+        targetCount:
+          type: integer
+          description: Граница сработки правила по количеству
+        valueIsTrue:
+          type: boolean
+          description: Определение сработки правила по количеству звонков попадающих под условие typeOperationCount
+        typeOperationAB:
+          $ref: '#/components/schemas/typeOperationBool'
+        typeOperationABCount:
+          $ref: '#/components/schemas/typeOperationBool'
+
+    typeOperation:
+      type: string
+      enum:
+        - include
+        - exclude
+      description: Операция проверки номера к списку (вхождение/исключение)
+
+    typeOperationBool:
+      type: string
+      enum:
+        - 'OR'
+        - 'AND'
+        - 'NOT'
+        - 'XOR'
+      description: Тип булевой операции результатов проверки
+
+    typeOperationCount:
+      type: string
+      enum:
+        - '>'
+        - '<'
+        - '='
+        - '>='
+        - '<='
+      description: Операция проверки количества сработки правила
+
+    RuleCreateObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseRule'
+
+    RuleCreateRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/RuleRequestDebug'
+        - type: object
+          properties:
+            rule:
+              $ref: '#/components/schemas/RuleCreateObject'
+
+    RuleReadObject:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/RuleId'
+
+    RuleReadRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/RuleRequestDebug'
+        - type: object
+          properties:
+            rule:
+              $ref: '#/components/schemas/RuleReadObject'
+
+    RuleUpdateObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseRule'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/RuleId'
+            lock:
+              $ref: '#/components/schemas/RuleLock'
+
+    RuleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/RuleRequestDebug'
+        - type: object
+          properties:
+            rule:
+              $ref: '#/components/schemas/RuleUpdateObject'
+
+    RuleDeleteObject:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/RuleId'
+            lock:
+              $ref: '#/components/schemas/RuleLock'
+
+    RuleDeleteRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/RuleRequestDebug'
+        - type: object
+          properties:
+            rule:
+              $ref: '#/components/schemas/RuleDeleteObject'
+
+    RuleSearchFilter:
+      type: object
+      description: Набор фильтров для поиска
+      properties:
+        searchString:
+          type: string
+          description: Поисковая строка, которая будет искаться в правилах
+
+    RuleSearchRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/RuleRequestDebug'
+        - type: object
+          properties:
+            ruleFilter:
+              $ref: '#/components/schemas/RuleSearchFilter'
+
+    RuleInitResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+
+    RuleResponseObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseRule'
+        - type: object
+          description: Объект, который возвращается в ответе бэкенда
+          properties:
+            id:
+              $ref: '#/components/schemas/RuleId'
+            userId:
+              $ref: '#/components/schemas/UserId'
+            lock:
+              $ref: '#/components/schemas/RuleLock'
+            permissions:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/RulePermissions'
+
+    RulePermissions:
+      type: string
+      description: Доступы для оператора антифрод платформы для операций над правилами
+      enum:
+        - read
+        - update
+        - delete
+
+    RuleResponseSingle:
+      allOf:
+        - type: object
+          description: Ответ с одним объектом правило
+          properties:
+            rule:
+              $ref: '#/components/schemas/RuleResponseObject'
+
+    RuleResponseMulti:
+      allOf:
+        - type: object
+          description: Список найденных объектов
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/RuleResponseObject'
+
+    RuleCreateResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/RuleResponseSingle'
+
+    RuleReadResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/RuleResponseSingle'
+
+    RuleUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/RuleResponseSingle'
+
+    RuleDeleteResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/RuleResponseSingle'
+
+    RuleSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/RuleResponseMulti'
+
+    # STUBS ======================
+    RuleRequestDebugMode:
+      type: string
+      enum:
+        - prod
+        - test
+        - stub
+
+    RuleRequestDebug:
+      type: object
+      properties:
+        debug:
+          $ref: '#/components/schemas/RuleDebug'
+
+    RuleDebug:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/RuleRequestDebugMode'
+        stub:
+          $ref: '#/components/schemas/RuleRequestDebugStubs'
+
+    RuleRequestDebugStubs:
+      type: string
+      description: Перечисления всех стабов
+      enum:
+        - success
+        - notFound
+        - badId
+        - badDescription
+        - badPriority
+        - badListForNumberA
+        - badTypeOperationA
+        - badListForNumberB
+        - badTypeOperationB
+        - badTypeOperationCount
+        - badTargetCount
+        - badValueIsTrue
+        - badTypeOperationAB
+        - badTypeOperationABCount
+        - cannotDelete
+        - badSearchString
